@@ -116,13 +116,23 @@ app.post('/urls/:shortURL', (req,res) => {
 })
 
 app.post('/login', (req, res) => {
-  res.cookie('email', req.body['email']);
+  const loginEmail = req.body['email'];
+  const password = req.body['password'];
+  const user = findUserEmail(loginEmail);
+  if (!user) {
+    return res.status(400).send('Account with this email does not exist')
+  }
+  if (user.password === password) {
+    res.cookie('user_id', user.id);
+  } else {
+    return res.status(400).send('Password does not match our records')
+  }
   //console.log(req.body)
   res.redirect('/urls')
 })
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('email');
+  res.clearCookie('user_id');
   res.redirect('/urls')
 });
 
@@ -146,6 +156,10 @@ app.post('/register', (req, res) => {
     res.cookie('user_id', newId);
     res.redirect('/urls')
 });
+
+app.get('/login', (req, res) => {
+  res.render('urls_login');
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
