@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const { findUserEmail } = require('./helpers');
-
+const methodOverrider=require('method-override')
 
 
 const generateRandomString = function() {
@@ -31,6 +31,7 @@ app.use(cookieSession({
   name: 'user_Id',
   keys : ['key1','key2']
 }));
+app.use(methodOverrider('_method'));
 
 app.set("view engine", "ejs");
 
@@ -126,7 +127,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 //post request to delete url, return error message if user not logged in or does not own the url
-app.post('/urls/:shortURL/delete', (req, res) => {
+app.delete('/urls/:shortURL/delete', (req, res) => {
   const user = users[req.session.user_Id];
   if (!user) {
     return res.status(400).send('Please login first');
@@ -141,7 +142,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 //post request to short URL page, return error message if user is not loggin in or does not own the url
-app.post('/urls/:shortURL', (req,res) => {
+app.put('/urls/:shortURL', (req,res) => {
   const user = users[req.session.user_Id];
   if (!user) {
     return res.status(400).send('Please login first');
