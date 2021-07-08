@@ -32,6 +32,16 @@ function findUserEmail(email) {
   return null;
 }
 
+const urlsForUser = (user_Id) => {
+  let outputURL = {};
+  for (const URL in urlDatabase) {
+    if(urlDatabase[URL].userID === user_Id){
+      outputURL[URL] = urlDatabase[URL]
+    }
+  }
+  return outputURL;
+}
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
@@ -62,7 +72,11 @@ const users = {
 }
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if(req.cookies["user_id"]) {
+    res.redirect('/urls')
+  } else {
+    res.redirect('/login')
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -75,7 +89,12 @@ app.get("/hello", (req,res) => {
 
 app.get("/urls", (req,res) => {
   const user = findUser(req.cookies["user_id"])
-  const templateVars = { urls: urlDatabase, user: user};
+  if (!user) {
+    return res.status(400).send('Please login first');
+  }
+  const userURL = urlsForUser(user.id)
+  console.log(userURL)
+  const templateVars = { urls: userURL, user: user};
   res.render("urls_index", templateVars);
 })
 
@@ -91,6 +110,13 @@ app.get('/urls/new', (req, res) => {
 
 app.get('/urls/:shortURL', (req,res) => {
   const user = findUser(req.cookies["user_id"])
+  if(!user) {
+    return res.status(400).send('Please login first')
+  }
+  const userURL = urlsForUser(user.id)
+  if(!userURL[req.params.shortURL]) {
+    return res.status(400).send('You do not have this url')
+  }
   templateVars = { 
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
@@ -117,12 +143,28 @@ app.get("/u/:shortURL", (req, res) => {
 })
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+  const user = findUser(req.cookies["user_id"])
+  if(!user) {
+    return res.status(400).send('Please login first')
+  }
+  const userURL = urlsForUser(user.id)
+  if(!userURL[req.params.shortURL]) {
+    return res.status(400).send('You do not have this url')
+  }
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
 })
 
 app.post('/urls/:shortURL', (req,res) => {
+  const user = findUser(req.cookies["user_id"])
+  if(!user) {
+    return res.status(400).send('Please login first')
+  }
+  const userURL = urlsForUser(user.id)
+  if(!userURL[req.params.shortURL]) {
+    return res.status(400).send('You do not have this url')
+  }
   const shortURL = req.params.shortURL;
   const newLongURL = req.body;
   //console.log(newLongURL[shortURL])
