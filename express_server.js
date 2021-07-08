@@ -38,8 +38,14 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2" : "http://www.lighthouselabs.ca",
-  "9sm5xK" : "http://www.google.com"
+  "b2xVn2" : {
+   longURL : "http://www.lighthouselabs.ca",
+   userID : "userRandomID"
+  },  
+  "9sm5xK" : {
+    longURL : "http://www.google.com",
+    userID : "user2RandomID"
+  }
 };
 
 const users = {
@@ -76,14 +82,18 @@ app.get("/urls", (req,res) => {
 app.get('/urls/new', (req, res) => {
   const user = findUser(req.cookies["user_id"])
   const templateVars = { user };
-  res.render("urls_new", templateVars);
+  if (user) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/urls')
+  }
 })
 
 app.get('/urls/:shortURL', (req,res) => {
   const user = findUser(req.cookies["user_id"])
   templateVars = { 
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL]['longURL'],
     user
   };
   res.render("urls_show", templateVars);
@@ -91,13 +101,18 @@ app.get('/urls/:shortURL', (req,res) => {
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  console.log(urlDatabase);
+  urlDatabase[shortURL] = {};
+  urlDatabase[shortURL]['userID'] = req.cookies["user_id"];
+  urlDatabase[shortURL]['longURL'] = req.body.longURL;
+  console.log(urlDatabase)
   res.redirect(`/urls/${shortURL}`)
 })
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(400).send('Short URL does not exist')
+  }
+  const longURL = urlDatabase[req.params.shortURL]['longURL'];
   res.redirect(longURL);
 })
 
@@ -111,7 +126,7 @@ app.post('/urls/:shortURL', (req,res) => {
   const shortURL = req.params.shortURL;
   const newLongURL = req.body;
   //console.log(newLongURL[shortURL])
-  urlDatabase[shortURL] = newLongURL[shortURL];
+  urlDatabase[shortURL]['longURL'] = newLongURL[shortURL];
   res.redirect('/urls')
 })
 
@@ -160,6 +175,10 @@ app.post('/register', (req, res) => {
 app.get('/login', (req, res) => {
   res.render('urls_login', user = null);
 })
+
+// app.get('/u/:id', (req, res) => {
+
+// })
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
