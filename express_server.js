@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080; //default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
 
 function generateRandomString() {
   let output = '';
@@ -62,12 +64,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur",10)
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk",10)
   }
 }
 
@@ -85,7 +87,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/hello", (req,res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+}); 
 
 app.get("/urls", (req,res) => {
   const user = findUser(req.cookies["user_id"])
@@ -104,7 +106,7 @@ app.get('/urls/new', (req, res) => {
   if (user) {
     res.render("urls_new", templateVars);
   } else {
-    res.redirect('/urls')
+    res.redirect('/login')
   }
 })
 
@@ -130,7 +132,6 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {};
   urlDatabase[shortURL]['userID'] = req.cookies["user_id"];
   urlDatabase[shortURL]['longURL'] = req.body.longURL;
-  console.log(urlDatabase)
   res.redirect(`/urls/${shortURL}`)
 })
 
@@ -179,7 +180,7 @@ app.post('/login', (req, res) => {
   if (!user) {
     return res.status(403).send('Account with this email does not exist')
   }
-  if (user.password === password) {
+  if (bcrypt.compareSync(password, user.password)) {
     res.cookie('user_id', user.id);
   } else {
     return res.status(403).send('Password does not match our records')
@@ -200,6 +201,8 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
+    const userInfo = req.body;
+    userInfo.password = bcrypt.hashSync(password,10);
     if(!email || !password) {
       return res.status(400).send('email and password cannot be blank');
     }
@@ -208,7 +211,7 @@ app.post('/register', (req, res) => {
     }
 
     const newId = generateRandomString()
-    users[newId] = req.body;
+    users[newId] = userInfo;
     users[newId]['id'] =  newId;
     res.cookie('user_id', newId);
     res.redirect('/urls')
