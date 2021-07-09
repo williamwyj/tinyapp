@@ -23,6 +23,38 @@
         <button type="submit">Submit</button>
       </form>
     </div>
+    <table class = "table">
+      <thread>
+        <tr>
+          <th scope="col">Total Visit</th>
+          <th scope="col">Unique Visit</th>
+        </tr>
+      </thread>
+      <tbody>
+        <tr>
+          <td><%= totalVisit %></td>
+          <td><%= uniqueVisit %></td>
+        </tr>
+      </tbody>
+    </table>
+    <table class = "table">
+      <thread>
+        <tr>
+          <th scope="col">Visitor</th>
+          <th scope="col">Time Stamp</th>
+        </tr>
+      </thread>
+      <tbody>
+        <% for (const visit in visitHistory) { %>
+        <tr>
+            <% const timeStamp = visitHistory[visit]['time']; %>
+            <% const visitor = visitHistory[visit]['visitor']; %>
+            <td><%= visitor %></td>
+            <td><%= timeStamp %></td>
+          </tr>
+          <% } %>
+      </tbody>
+    </table>
   <div class="card-footer text-muted"></div>
   </div>
   <!-- Bootstrap JS -->

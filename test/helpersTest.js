@@ -17,18 +17,18 @@ const testUsers = {
 
 describe('getUserByEmail', function() {
   it('should return a user with valid email', function() {
-    const user = findUserEmail("user@example.com", testUsers)
+    const user = findUserEmail("user@example.com", testUsers);
     const expectedOutput = "userRandomID";
-    assert.equal(user.id, expectedOutput)
-  })
+    assert.equal(user.id, expectedOutput);
+  });
   it('should return a user object when provided valid email', function() {
-    const user = findUserEmail("user@example.com", testUsers)
-    const expectedOutput = testUsers.userRandomID
-    assert.deepEqual(user, expectedOutput)
-  })
+    const user = findUserEmail("user@example.com", testUsers);
+    const expectedOutput = testUsers.userRandomID;
+    assert.deepEqual(user, expectedOutput);
+  });
   it('should return undefined if input non-existent email', function() {
-    const user = findUserEmail("invalid@email.com", testUsers)
+    const user = findUserEmail("invalid@email.com", testUsers);
     const expectedOutput = undefined;
-    assert.equal(user, expectedOutput)
-  })
-})
+    assert.equal(user, expectedOutput);
+  });
+});

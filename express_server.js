@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const { findUserEmail } = require('./helpers');
-const methodOverrider=require('method-override')
+const methodOverrider = require('method-override');
 
 
 const generateRandomString = function() {
@@ -26,6 +26,7 @@ const urlsForUser = (user_Id) => {
   return outputURL;
 };
 
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'user_Id',
@@ -38,11 +39,21 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   "b2xVn2" : {
     longURL : "http://www.lighthouselabs.ca",
-    userID : "userRandomID"
+    userID : "userRandomID",
+    totalVisit : 0,
+    uniqueVisit : 0,
+    visitHistory : {
+
+    }
   },
   "9sm5xK" : {
     longURL : "http://www.google.com",
-    userID : "user2RandomID"
+    userID : "user2RandomID",
+    totalVisit : 0,
+    uniqueVisit : 0,
+    visitHistory : {
+      
+    }
   }
 };
 
@@ -103,7 +114,10 @@ app.get('/urls/:shortURL', (req,res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]['longURL'],
-    user
+    user,
+    totalVisit : urlDatabase[req.params.shortURL]['totalVisit'],
+    uniqueVisit : urlDatabase[req.params.shortURL]['uniqueVisit'],
+    visitHistory : urlDatabase[req.params.shortURL]['visitHistory']
   };
   res.render("urls_show", templateVars);
 });
@@ -114,6 +128,9 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {};
   urlDatabase[shortURL]['userID'] = req.session.user_Id;
   urlDatabase[shortURL]['longURL'] = req.body.longURL;
+  urlDatabase[shortURL]['totalVisit'] = 0;
+  urlDatabase[shortURL]['uniqueVisit'] = 0;
+  urlDatabase[shortURL]['visitHistory'] = {};
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -123,6 +140,28 @@ app.get("/u/:shortURL", (req, res) => {
     return res.status(400).send('Short URL does not exist');
   }
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
+
+  // if(!urlDatabase[req.params.shortURL]['visitHistory'].hasOwnProperty(req.session.user_Id)) {
+  //   urlDatabase[req.params.shortURL]['uniqueVisit']++
+  // }
+  let uniqueVisit = true;
+  for (const visit in urlDatabase[req.params.shortURL]['visitHistory']) {
+    if (urlDatabase[req.params.shortURL]['visitHistory'][visit]['visitor'] === req.session.user_Id) {
+      uniqueVisit = false;
+    }
+  }
+
+  if (uniqueVisit) {
+    urlDatabase[req.params.shortURL]['uniqueVisit']++;
+  }
+
+  urlDatabase[req.params.shortURL]['totalVisit']++;
+  const totalVisit = urlDatabase[req.params.shortURL]['totalVisit'];
+  if (!urlDatabase[req.params.shortURL]['visitHistory'][totalVisit]) {
+    urlDatabase[req.params.shortURL]['visitHistory'][totalVisit] = {};
+  }
+  urlDatabase[req.params.shortURL]['visitHistory'][totalVisit]['visitor'] = req.session.user_Id;
+  urlDatabase[req.params.shortURL]['visitHistory'][totalVisit]['time'] = new Date().toString();
   res.redirect(longURL);
 });
 
